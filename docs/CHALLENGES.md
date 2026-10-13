@@ -51,3 +51,21 @@ This file records every problem I hit during the project and what I did about it
 ## 12. gunicorn does not run on Windows
 **Problem:** In production the API should run on gunicorn (a proper web server), not Flask's built-in test server. But gunicorn only works on Linux and macOS.
 **Fix:** On my Windows laptop I test the API with `python app/app.py` (the Flask server) and with `pytest`. Inside the Docker container, which is Linux, the API runs on gunicorn.
+
+## 13. "!!" inside a curl command changed my tweet
+**Problem:** When I tested the API with curl in Git Bash, the tweet "I absolutely love this new phone!!" arrived at the API as "...phonecurl -s http://localhost:5000/health...". In Bash, `!!` is a shortcut for "repeat the last command", so Bash inserted my previous command into the text, even inside double quotes.
+**Fix:** I put the JSON inside **single quotes** (`-d '{"text": "..."}'`). Bash does not expand `!!` inside single quotes.
+
+## 14. "docker build" could not find the Dockerfile
+**Problem:** `docker build -t sentiment140-api:v1 .` failed with "open Dockerfile: no such file or directory".
+**Why:** I ran it from my home folder (`~`). The `.` at the end means "build from the current folder", and the Dockerfile is in the project folder.
+**Fix:** I ran `cd ~/Downloads/"Data Engineering"/sentiment140-mlops` first, and the build worked.
+
+## 15. The container disappeared from Docker Desktop
+**Problem:** After `docker rm -f sentiment-api`, the container vanished from Docker Desktop.
+**Why:** `docker rm` deletes the **container** (a running copy), but not the **image** (the package it was made from).
+**Fix:** I started a new container from the same image with `docker run`. The image was still in the Images tab.
+
+## 16. GitHub workflow file could not be created by the assistant tool
+**Problem:** The tool I used to write files could not write into the `.github/` folder, because it is protected.
+**Fix:** I moved the workflow file into `.github/workflows/` myself with one `mv` command in Git Bash.

@@ -1,0 +1,79 @@
+# CI/CD pipeline for the Sentiment140 API
+# CI  (every push and pull request): install dependencies and run all tests
+# CD  (only on push to main, after tests pass): build the Docker image, smoke-test it,
+#      and push it to Docker Hub with three tags: latest, the model version, and the git commit
+name: CI-CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:        # I can also start it by hand from the Actions tab
+
+env:
+  IMAGE_NAME: sentiment140-api
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run unit and API tests
+        run: python -m pytest -v
+
+  build-and-push:
+    name: Build, smoke-test and push Docker image
+    needs: test                                   # only runs if every test passed
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Read the model version used by the image
+        id: version
+        run: |
+          MODEL_VERSION=$(grep -oP 'MODEL_VERSION=\K\S+' Dockerfile | head -1)
+          echo "model=${MODEL_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Model version: ${MODEL_VERSION}"
+
+      - name: Build the image
+        run: docker build -t $IMAGE_NAME:ci .
+
+      - name: Smoke-test the running container
+        run: |
+          docker run -d -p 5000:5000 --name smoke $IMAGE_NAME:ci
+          for i in $(seq 1 20); do curl -sf http://localhost:5000/health && break; sleep 1; done
+          RESPONSE=$(curl -s -X POST http://localhost:5000/predict -H 'Content-Type: application/json' -d '{"text": "I love this so much"}')
+          echo "$RESPONSE"
+          echo "$RESPONSE" | grep -q '"sentiment":"positive"'
+          docker rm -f smoke
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Tag and push the image
+        run: |
+          REPO=${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME
+          for TAG in latest ${{ steps.version.outputs.model }} ${{ steps.version.outputs.model }}-${{ steps.version.outputs.sha }}; do
+            docker tag $IMAGE_NAME:ci $REPO:$TAG
+            docker push $REPO:$TAG
+          done
+          echo "Pushed $REPO with tags: latest, ${{ steps.version.outputs.model }}, ${{ steps.version.outputs.model }}-${{ steps.version.outputs.sha }}"
