@@ -1,0 +1,4 @@
+# I store text files with Linux line endings (LF) so they work inside Docker and GitHub Actions
+* text=auto eol=lf
+*.joblib binary
+*.png binary

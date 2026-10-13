@@ -1,0 +1,16 @@
+# I keep the image small: no data, notebooks, reports, git history or caches
+data/
+notebooks/
+reports/
+docs/
+tests/
+.git/
+.github/
+k8s/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/
+.venv/
+.idea/
+*.md

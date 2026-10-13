@@ -1,0 +1,39 @@
+{
+  "model_version": "v1",
+  "created_at": "2026-10-12T20:45:08",
+  "algorithm": "TF-IDF (1-2 grams) + LogisticRegression",
+  "hyperparameters": {
+    "C": 1.0,
+    "min_df": 5,
+    "max_features": 300000,
+    "ngram_range": [
+      1,
+      2
+    ]
+  },
+  "neutral_band": [
+    0.3,
+    0.7
+  ],
+  "training_rows": 1208408,
+  "data_file": "training.1600000.processed.noemoticon.csv",
+  "data_sha256": "08cba6317a49528fcd074f9043aafcd5ad6c6be45ede159c4e36cec33af24afe",
+  "validation_metrics": {
+    "accuracy": 0.8219,
+    "f1": 0.8224,
+    "precision": 0.8145,
+    "recall": 0.8306,
+    "roc_auc": 0.9009
+  },
+  "test_metrics": {
+    "accuracy": 0.8231,
+    "f1": 0.8236,
+    "precision": 0.8157,
+    "recall": 0.8316,
+    "roc_auc": 0.9018,
+    "share_neutral": 0.2679,
+    "accuracy_excluding_neutral": 0.8966
+  },
+  "python": "3.14.2",
+  "scikit_learn": "1.8.0"
+}
