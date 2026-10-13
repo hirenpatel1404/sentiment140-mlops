@@ -9,3 +9,6 @@ venv/
 .idea/
 .vscode/
 .pytest_cache/
+
+# submission zip (built locally, not part of the code)
+*.zip

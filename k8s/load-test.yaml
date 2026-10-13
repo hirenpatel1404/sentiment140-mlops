@@ -1,0 +1,23 @@
+# Load generator: a small pod that keeps sending batches of 100 tweets to the API, to trigger autoscaling
+apiVersion: v1
+kind: Pod
+metadata:
+  name: load-generator
+spec:
+  restartPolicy: Never
+  containers:
+    - name: load
+      image: curlimages/curl:8.10.1
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          BODY='{"texts": ['
+          for i in $(seq 1 99); do BODY="$BODY\"I love this phone but the battery life is really bad today\","; done
+          BODY="$BODY\"last one\"]}"
+          echo "Sending load to sentiment-api..."
+          while true; do
+            for j in 1 2 3 4 5 6 7 8; do
+              curl -s -o /dev/null -X POST http://sentiment-api:8000/predict/batch -H 'Content-Type: application/json' -d "$BODY" &
+            done
+            wait
+          done

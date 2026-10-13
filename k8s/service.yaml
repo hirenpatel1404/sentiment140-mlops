@@ -1,0 +1,12 @@
+# Service: one stable address that spreads requests across all running pods
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentiment-api
+spec:
+  type: LoadBalancer                # on Docker Desktop this is reachable at http://localhost:8000
+  selector:
+    app: sentiment-api
+  ports:
+    - port: 8000
+      targetPort: 5000

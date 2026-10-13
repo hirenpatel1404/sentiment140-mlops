@@ -69,3 +69,18 @@ This file records every problem I hit during the project and what I did about it
 ## 16. GitHub workflow file could not be created by the assistant tool
 **Problem:** The tool I used to write files could not write into the `.github/` folder, because it is protected.
 **Fix:** I moved the workflow file into `.github/workflows/` myself with one `mv` command in Git Bash.
+
+## 17. Node.js 20 warnings in GitHub Actions
+**Problem:** The first CI/CD run succeeded, but showed 2 warnings: "Node.js 20 is deprecated" for `actions/checkout@v4`, `actions/setup-python@v5` and `docker/login-action@v3`.
+**Why:** These ready-made GitHub actions are written in JavaScript, and GitHub is moving its runners from Node.js 20 to Node.js 24. It already runs them on Node.js 24 automatically.
+**Fix:** No action was needed. These are only warnings, and both jobs passed. In the future I would update the actions to their newest major versions.
+
+## 18. The rollout history showed the same note twice
+**Problem:** In the rollback demo, `kubectl rollout history` showed "release pinned image v1-220149e" next to every revision, even the original one.
+**Why:** I added the change-cause note with `kubectl annotate` **before** changing the image. Kubernetes copied the note onto the version that was already running, and then onto the new one as well.
+**Fix / lesson:** The rollback itself worked. `kubectl describe` showed the image back on `hirenpatel9/sentiment140-api:v1`, and `/health` answered throughout. Next time I will add the note **after** `kubectl set image`, or put the change-cause in `deployment.yaml` and use `kubectl apply`.
+
+## 19. Warning about "kubectl apply" after the rollback
+**Problem:** `kubectl rollout undo` printed a warning that the deployment "was previously managed with kubectl apply".
+**Why:** Kubernetes remembers the last file I applied. A rollback changes the live deployment, but not that saved copy of the file.
+**Fix / lesson:** After an emergency rollback, I also update `k8s/deployment.yaml` to match (Option D in MODEL_VERSIONING.md), so the next `kubectl apply` doesn't undo the rollback by accident.

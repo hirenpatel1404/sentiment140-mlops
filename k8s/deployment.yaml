@@ -1,0 +1,53 @@
+# Deployment: keeps the API running with the requested number of copies (pods)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentiment-api
+  labels:
+    app: sentiment-api
+  annotations:
+    kubernetes.io/change-cause: "initial release - model v1"
+spec:
+  replicas: 2                       # I start with 2 pods for availability; the HPA can change this
+  revisionHistoryLimit: 10          # I keep 10 old versions so I can roll back
+  selector:
+    matchLabels:
+      app: sentiment-api
+  strategy:
+    type: RollingUpdate             # new pods start before old ones stop -> no downtime during updates
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: sentiment-api
+    spec:
+      containers:
+        - name: sentiment-api
+          image: hirenpatel9/sentiment140-api:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          env:
+            - name: MODEL_VERSION
+              value: "v1"
+          resources:
+            requests:               # what each pod is guaranteed (the HPA measures CPU against this)
+              cpu: "100m"
+              memory: "256Mi"
+            limits:                 # the most each pod may use
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:           # only send traffic to a pod once /health answers
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:            # restart a pod automatically if it stops answering
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 10
